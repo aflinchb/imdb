@@ -4,7 +4,7 @@ This repository contains an extract of 100 movies and associated actors, produce
 
 The purpose of this repo is to demonstrate some NoSQL modeling and querying techniques and decisions when using Azure Cosmos DB as a data store.
 
-```
+```none
 
 IMDb shares their data for non-commercial use only. Please respect their data policies.
 
@@ -17,7 +17,7 @@ Used with permission.
 
 ## Installation
 
-* Clone this repo: git clone https://github.com/4-co/imdb
+* Clone this repo: git clone <https://github.com/4-co/imdb>
 * Create an Azure Cosmos DB Account from the Azure Portal or via the Azure CLI
   * Make sure to use the Core (SQL) API
 * Create a Cosmos DB database named imdb
@@ -63,7 +63,7 @@ Generally, you don't want to combine fast changing data and slow changing data i
 
 ### Embedded Links
 
-Movies have actors (and producers and directors and crew ...) and Actors star in Movies. 
+Movies have actors (and producers and directors and crew ...) and Actors star in Movies.
 
 In a relational model, you would normally have a "MoviesActors" table and join. In a document world, you normally embed unless the embedded data is fast changing or potentially grows to be very large. More information [here](https://docs.microsoft.com/en-us/azure/cosmos-db/partition-data)
 
@@ -86,13 +86,14 @@ Again, for large or advanced search workloads, you should integrate Azure Search
 Cosmos DB is an excellent key-value cache with simple geo-distribution and replication. Performance is often better than other caching solutions and Cosmos DB is cost competitive. The added simplicity of having one data access API and one data platform to manage makes development and operations more efficient.
 
 Some general guidelines:
-  * Use the native (SQL) API
-  * Use a separate collection for your key-value cache than your operational data
-  * Use an efficient partition hash that distributes storage and access evenly (int mod x works well for numeric keys)
-  * Use indexing [policies](https://docs.microsoft.com/en-us/azure/cosmos-db/index-policy) to turn off indexing for the value
-  * Use direct access by ID (key) for reads
-  * Use Cosmos DB [TTL](https://docs.microsoft.com/en-us/azure/cosmos-db/time-to-live) to automatically remove old items
-  * Use Cosmos DB [change feed](https://docs.microsoft.com/en-us/azure/cosmos-db/change-feed) to extract values into other systems
+  
+* Use the native (SQL) API
+* Use a separate collection for your key-value cache than your operational data
+* Use an efficient partition hash that distributes storage and access evenly (int mod x works well for numeric keys)
+* Use indexing [policies](https://docs.microsoft.com/en-us/azure/cosmos-db/index-policy) to turn off indexing for the value
+* Use direct access by ID (key) for reads
+* Use Cosmos DB [TTL](https://docs.microsoft.com/en-us/azure/cosmos-db/time-to-live) to automatically remove old items
+* Use Cosmos DB [change feed](https://docs.microsoft.com/en-us/azure/cosmos-db/change-feed) to extract values into other systems
 
 ### Understanding RUs
 
@@ -110,40 +111,40 @@ Unlike relational modeling where specific normal forms are verifiable, document 
 
 Click the new sample query icon in the Data Explorer tool bar and run the default select * query to see the first 100 documents
 
-Cosmos DB Query cheat sheets: https://docs.microsoft.com/en-us/azure/cosmos-db/query-cheat-sheet
+Cosmos DB Query cheat sheets: <https://docs.microsoft.com/en-us/azure/cosmos-db/query-cheat-sheet>
 
-```
+```sql
 
 # Simplest query
 select * from m
 
 # List of movies
-select m.movieId, m.type, m.title, m.year, m.runtime, m.genres, m.roles 
-from m 
+select m.movieId, m.type, m.title, m.year, m.runtime, m.genres, m.roles
+from m
 where m.type = 'Movie'
 
 # List of Genres
-select m.genre 
-from m 
+select m.genre
+from m
 where m.type = 'Genre'
 
 # List of Actors
-select m.actorId, m.type, m.name, m.birthYear, m.deathYear, m.profession, m.movies 
-from m 
+select m.actorId, m.type, m.name, m.birthYear, m.deathYear, m.profession, m.movies
+from m
 where m.type = 'Actor'
 
 # Simple transform
 select value m.title
-from m 
+from m
 
 # Unexpected behavior
 # This is a side effect of combining the document types in one collection
 select m.title
-from m 
+from m
 
 # Info about a great movie
-select m.movieId, m.type, m.rating, m.votes, m.title, m.year, m.runtime, m.genres, m.roles 
-from m 
+select m.movieId, m.type, m.rating, m.votes, m.title, m.year, m.runtime, m.genres, m.roles
+from m
 where m.id = 'tt0133093'
 
 # A list of specific movies
@@ -158,42 +159,42 @@ where m.movieId in ("tt0167260", "tt0419781", "tt0367495", "tt0120737", "tt03584
 #   this will vary slightly by model and data size. Single reads are constant.
 
 # An actor from a great movie
-select m.actorId, m.type, m.name, m.birthYear, m.deathYear, m.profession, m.movies 
-from m 
+select m.actorId, m.type, m.name, m.birthYear, m.deathYear, m.profession, m.movies
+from m
 where m.id = 'nm0000206'
 
-# Movies Jennifer Connelly is in 
+# Movies Jennifer Connelly is in
 select m.movieId, m.type, m.rating, m.votes, m.title, m.year, m.runtime, m.genres, m.roles
-from m 
+from m
 where array_contains(m.roles, { actorId: "nm0000124" }, true) order by m.movieId
 
 # Another way
 # note you can't use select * or select m.*
 select m.movieId, m.type, m.title, m.year, m.runtime, m.genres, m.roles
-from movies m 
+from movies m
 join r in m.roles
 where r.actorId = 'nm0000124'
 
 # Action Movies
 # Note this is case sensitive, so 'action' won't work
-select m.movieId, m.type, m.rating, m.votes, m.title, m.year, m.runtime, m.genres, m.roles 
-from m 
-where array_contains(m.genres, 'Action') 
+select m.movieId, m.type, m.rating, m.votes, m.title, m.year, m.runtime, m.genres, m.roles
+from m
+where array_contains(m.genres, 'Action')
 order by m.movieId
 
 # Search movie title for "rings"
 select m.movieId, m.type, m.rating, m.votes, m.title, m.year, m.runtime, m.genres, m.roles
-from m 
+from m
 where contains(m.textSearch, 'rings')
 
 # Search actor names for "tom"
-select m.actorId, m.type, m.name, m.birthYear, m.deathYear, m.profession, m.movies 
-from m 
+select m.actorId, m.type, m.name, m.birthYear, m.deathYear, m.profession, m.movies
+from m
 where contains(m.textSearch, 'tom')
 
 # Long movies
 select top 5 m.movieId, m.type, m.rating, m.votes, m.title, m.year, m.runtime, m.genres, m.roles
-from m 
+from m
 order by m.runtime desc
 
 # Highest rated movies
