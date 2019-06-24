@@ -27,8 +27,8 @@ Used with permission.
 * Load the data from Data Explorer in the Azure Portal
   * Expand the imdb database
   * Expand the movies collection
-  * Click on Documents
-  * Click Upload Document
+  * Click on Items
+  * Click Upload Item
     * Load each of the json documents from this repo
       * You will need to upload one document at a time or increase the RUs to about 5000
 * Reset Throughput (RU/s) to 400 to save cost
