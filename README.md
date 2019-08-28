@@ -15,25 +15,58 @@ Used with permission.
 
 ```
 
-## Installation
+## Create CosmosDB Server, Database and Collection and load the IMDb sample data
 
-* Clone this repo: git clone <https://github.com/4-co/imdb>
-* Create an Azure Cosmos DB Account from the Azure Portal or via the Azure CLI
-  * Make sure to use the Core (SQL) API
-* Create a Cosmos DB database named imdb
-* Create a Cosmos DB collection named movies
-  * Use /key as the Partition Key
-  * Set Throughput (RU/s) to 2000
-* Load the data from Data Explorer in the Azure Portal
-  * Expand the imdb database
-  * Expand the movies collection
-  * Click on Items
-  * Click Upload Item
-    * Load each of the json documents from this repo
-      * You will need to upload one document at a time or increase the RUs to about 5000
-* Reset Throughput (RU/s) to 400 to save cost
+* This takes several minutes to run
 
-Once loaded click the refresh icon in Data Explorer and you should see documents
+```bash
+
+# set environment variables
+
+# location
+export Imdb_Location="centralus"
+
+# Resource Group Name
+export Imdb_RG="cosmos-imdb-rg"
+
+# replace xxxx with a unique identifier (or replace the entire name)
+# do not use punctuation or uppercase (a-z, 0-9)
+export Imdb_Name="imdbcosmosxxxx"
+
+### if true, change name to avoid DNS failure on create
+az cosmosdb check-name-exists -n ${Imdb_Name}
+
+# create a new resource group
+az group create -n $Imdb_RG -l $Imdb_Location
+
+# create the CosmosDB server
+az cosmosdb create  -g $Imdb_RG -n $Imdb_Name > ~/cosmos.log
+
+# create the database
+az cosmosdb database create -d imdb -g $Imdb_RG -n $Imdb_Name
+
+# create the collection
+# 400 is the minimum RUs
+# /key is the partition key ("0" for the sample data)
+az cosmosdb collection create --throughput 400 --partition-key-path /key -g $Imdb_RG -n $Imdb_Name -d imdb -c movies
+
+# get readwrite key
+export Imdb_Key=$(az cosmosdb keys list -n $Imdb_Name -g $Imdb_RG --query primaryMasterKey -o tsv)
+
+# run the docker IMDb Import app
+docker run -it --rm fourco/imdb-import $Imdb_Name $Imdb_Key imdb movies
+
+# Note: If you see the following error, some of the data may not have been uploaded.
+# Run the IMDb Import app again to make sure any missing documents are loaded.
+# 
+# Unhandled Exception: Microsoft.Azure.Documents.DocumentClientException: Message: {"Errors":["Request rate is large"]}
+
+```
+
+## Exploring the data
+
+* Open Azure Portal and navigate to the CosmosDB blade created above
+* Select Data Explorer and open the collection to see the data loaded
 
 ## Design Decisions
 
