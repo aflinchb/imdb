@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "imdb-import": {
-      "commandName": "Project",
-      "commandLineArgs": "bluebell kAYKP78ICFdi93UTlaJN4SiWsiBXw8JRcMkQWZAQlgM6z5pZChXzoYGIJzsCl0D2YKiqOYJQzLbmCq4HnMb7CQ== imdb movies2"
-    }
-  }
-}
