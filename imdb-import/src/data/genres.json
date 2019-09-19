@@ -2,115 +2,115 @@
 {
   "genre": "Action",
   "id": "action",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "Adventure",
   "id": "adventure",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "Animation",
   "id": "animation",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "Biography",
   "id": "biography",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "Comedy",
   "id": "comedy",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "Crime",
   "id": "crime",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "Documentary",
   "id": "documentary",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "Drama",
   "id": "drama",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "Family",
   "id": "family",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "Fantasy",
   "id": "fantasy",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "History",
   "id": "history",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "Music",
   "id": "music",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "Musical",
   "id": "musical",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "Mystery",
   "id": "mystery",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "Romance",
   "id": "romance",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "Sci-Fi",
   "id": "sci-fi",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "Sport",
   "id": "sport",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "Thriller",
   "id": "thriller",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 },
 {
   "genre": "War",
   "id": "war",
-  "key": "0",
+  "partitionKey": "0",
   "type": "Genre"
 }
 ]
