@@ -72,10 +72,7 @@ namespace imdb_import
             tasks.Add(LoadData(Genres, 0, Genres.Count));
 
             // wait for tasks to finish
-            foreach (Task t in tasks)
-            {
-                await t;
-            }
+            Task.WaitAll(tasks.ToArray());
 
             // done
             Console.WriteLine("Rows Loaded: {0}\n\nImport Complete", count);
@@ -98,27 +95,19 @@ namespace imdb_import
                     i++;
                     IncrementRowCount();
                 }
-                catch (Exception ex)
+                catch (DocumentClientException dce)
                 {
                     // catch the CosmosDB RU exceeded exception and retry
 
-                    DocumentClientException dce = ex as DocumentClientException;
-
-                    // Could be an aggregate exception
-                    if (dce == null)
-                    {
-                        dce = ex.InnerException as DocumentClientException;
-                    }
-
-                    // something else went wrong
-                    if (dce == null)
-                    {
-                        Console.WriteLine(ex);
-                        Environment.Exit(-1);
-                    }
-
-                    // sleep and then retry
                     Thread.Sleep(dce.RetryAfter);
+                }
+
+                catch (Exception ex)
+                {
+                    // log and exit
+
+                    Console.WriteLine(ex);
+                    Environment.Exit(-1);
                 }
             }
         }
