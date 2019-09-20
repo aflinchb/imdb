@@ -1,4 +1,4 @@
-# Sample IMDb data for use with Azure Cosmos DB
+# Sample IMDb data for use with CosmosDB
 
 This repository contains an extract of 100 movies and associated actors, producers, directors and genres from the IMDb public data available [here](https://www.imdb.com/interfaces/)
 
@@ -47,8 +47,9 @@ az cosmosdb database create -d imdb -g $Imdb_RG -n $Imdb_Name
 
 # create the collection
 # 400 is the minimum RUs
-# /key is the partition key ("0" for the sample data)
-az cosmosdb collection create --throughput 400 --partition-key-path /key -g $Imdb_RG -n $Imdb_Name -d imdb -c movies
+# /partitionKey is the partition key
+# partiton key is the id mod 10
+az cosmosdb collection create --throughput 400 --partition-key-path /partitionKey -g $Imdb_RG -n $Imdb_Name -d imdb -c movies
 
 # get readwrite key
 export Imdb_Key=$(az cosmosdb keys list -n $Imdb_Name -g $Imdb_RG --query primaryMasterKey -o tsv)
@@ -58,8 +59,6 @@ docker run -it --rm fourco/imdb-import $Imdb_Name $Imdb_Key imdb movies
 
 # Note: If you see the following error, some of the data may not have been uploaded.
 # Run the IMDb Import app again to make sure any missing documents are loaded.
-# 
-# Unhandled Exception: Microsoft.Azure.Documents.DocumentClientException: Message: {"Errors":["Request rate is large"]}
 
 ```
 
@@ -80,11 +79,13 @@ Each document has a type field that is one of: Movie, Actor or Genre
 
 ID has to be unique, so we use movieId, actorId or genre as the ID. Reading by ID is the fastest (and cheapest) way to retrieve a document.
 
-### One Partition
+### Partitioning Strategy
 
-All of the data is stored in one partition (/key = 0). Because the data is small, this is the best approach. As the data scales to all movies / TV shows, additional partitions would improve performance.
+The CosmosDB partition key used is /partitionKey and is computed by id mod 10 (i.e. the last character of the id field)
 
-You want your partition key to be well distributed from a storage and usage perspective. For Actors, a good partition key could be birthYear mod x. However, this would likely not be a good partition key for Movies as a high percentage of the requests are likely to be for the current year which would create a hot partition. A hash of the title would likely be a good choice. movieId (and actorId) are integers with a character preface (tt or nm), so a mod x on the integer portion would be a good choice as well.
+Note: Genres use a partitionKey of 0 as there are only 19 Genres
+
+You want your partition key to be well distributed from a storage and usage perspective. For Actors, a good partition key could be birthYear mod x. However, this would likely not be a good partition key for Movies as a high percentage of the requests are likely to be for the current year which would create a hot partition. A hash of the title would likely be a good choice. movieId (and actorId) are integers with a character preface (tt or nm), so a mod x on the integer portion is a good choice as well and the one we chose.
 
 You also want to avoid cross-partition queries unless absolutely necessary as they incur additional work which increases the RUs.
 
