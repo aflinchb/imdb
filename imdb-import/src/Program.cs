@@ -18,7 +18,10 @@ namespace imdb_import
 
         static async Task Main(string[] args)
         {
-            List<Task> tasks = new List<Task>();
+            // This loader uses the single document upsert API for simplicity
+            // Peak throughput is about 20 documents / sec
+            // While the loader uses multiple concurrent tasks to speed up the loading,
+            // the bulk load APIs should be used for large loads
 
             // make sure the args were passed in
             if (args.Length != 4)
@@ -43,15 +46,20 @@ namespace imdb_import
             collectionLink = UriFactory.CreateDocumentCollectionUri(cosmosDatabase, cosmosCollection);
 
             // load actors from the json files
+            // actors is the largest file so we load actors first
             List<dynamic> Actors = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(@"data/actors.json"));
 
             Console.WriteLine("Importing Data ...");
 
+            // worker threads
+            List<Task> tasks = new List<Task>();
+
             // set the batch size
+            // you want to limit the number of concurrent load tasks to < 10 with a 400 RU collection
             const int batchSize = 100;
             int max = Actors.Count / batchSize;
 
-            // load actors batchSize rows at a time
+            // load actors batchSize documents at a time
             for (int i = 0; i < max; i++)
             {
                 tasks.Add(LoadData(Actors, i * batchSize, batchSize));
@@ -75,7 +83,7 @@ namespace imdb_import
             Task.WaitAll(tasks.ToArray());
 
             // done
-            Console.WriteLine("Rows Loaded: {0}\n\nImport Complete", count);
+            Console.WriteLine("Documents Loaded: {0}\n\nImport Complete", count);
         }
 
         static async Task LoadData(List<dynamic> list, int start, int length)
@@ -122,7 +130,7 @@ namespace imdb_import
                 // update progress
                 if (count % 50 == 0)
                 {
-                    Console.WriteLine("Rows Loaded: {0}", count);
+                    Console.WriteLine("Documents Loaded: {0}", count);
                 }
             }
         }
