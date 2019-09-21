@@ -2,7 +2,7 @@
 
 This repository contains an extract of 100 movies and associated actors, producers, directors and genres from the IMDb public data available [here](https://www.imdb.com/interfaces/)
 
-The purpose of this repo is to demonstrate some NoSQL modeling and querying techniques and decisions when using CosmosDB as a data store.
+The purpose of this repo is to demonstrate some NoSQL modeling and querying techniques and decisions when using CosmosDB as a database.
 
 ```none
 
@@ -17,7 +17,7 @@ Used with permission.
 
 ## Create CosmosDB Server, Database and Collection and load the IMDb sample data
 
-* This takes several minutes to run
+This takes several minutes to run
 
 ```bash
 
@@ -30,7 +30,7 @@ export Imdb_Location="centralus"
 # do not use punctuation or uppercase (a-z, 0-9)
 export Imdb_Name="imdbcosmosxxxx"
 
-### if true, change name to avoid DNS failure on create
+## if true, change name to avoid DNS failure on create
 az cosmosdb check-name-exists -n ${Imdb_Name}
 
 # Resource Group Name
@@ -68,7 +68,7 @@ docker run -it --rm fourco/imdb-import $Imdb_Name $Imdb_Key imdb movies
 
 In considering the design, we wanted to follow document design best practices as well as optimizing for this specific problem.
 
-### One Collection
+## One Collection
 
 We chose to include different document types in the same collection for simplicity (and to demonstrate). You can read about some of the tradeoffs [here](https://docs.microsoft.com/en-us/azure/cosmos-db/modeling-data) and see some of the side effects in the queries below.
 
@@ -76,7 +76,7 @@ Each document has a type field that is one of: Movie, Actor or Genre
 
 ID has to be unique, so we use movieId, actorId or genre as the ID. Reading by ID is the fastest (and cheapest) way to retrieve a document.
 
-### Partitioning Strategy
+## Partitioning Strategy
 
 The CosmosDB partition key used is /partitionKey and is computed by taking the integer portion of movieId or actorId mod 10 and converting to a string which results in 10 partitions ("0" - "9")
 
@@ -92,11 +92,11 @@ You want to avoid cross-partition queries when possible as they incur additional
 
 Read more about partitioning strategies [here](https://docs.microsoft.com/en-us/azure/cosmos-db/partition-data)
 
-### Fast Changing Data
+## Fast Changing Data
 
 Generally, you don't want to combine fast changing data and slow changing data in the same document. In this example, "ratings" is a summary measure that would be periodically updated by a batch process. Because the data updates are known and bounded and the document is small, we chose to combine for ease of use. More information [here](https://docs.microsoft.com/en-us/azure/cosmos-db/partition-data)
 
-### Embedded Links
+## Embedded Links
 
 Movies have actors (and producers and directors and crew ...) and Actors star in Movies.
 
@@ -108,7 +108,7 @@ Note: When you update a single field in a document, CosmosDB writes the entire d
 
 A good example of what you would not want to embed is the individual ratings. Some movies have over 100K ratings, so you would want to keep the individual ratings in a separate collection and have a process that summarizes and updates the aggregate every n minutes.
 
-### Searching
+## Searching
 
 Some of the sample queries search the Movie Title or Actor Name using a "like" query. For a small amount of documents searching across a small number of fields, this works fine. However, if search is a primary use case or you want "full text" search, you should integrate CosmosDB with Azure Search as the queries will be richer, faster and less expensive.
 
@@ -118,7 +118,15 @@ Note that in CosmosDB, search is case sensitive, so searching Movies for "matrix
 
 Again, for large or advanced search workloads, you should integrate Azure Search (or SOLR) as part of the solution, using the CosmosDB [change feed](https://docs.microsoft.com/en-us/azure/cosmos-db/change-feed) to keep the index fresh is a proven model.
 
-### Key-Value Cache
+## Understanding RUs
+
+A best practice is to baseline the RUs for each "action" and include as part of your testing suite. Changes to your document model or query can result in significant changes in RUs. The CosmosDB API has the ability to capture RUs for each action, so building a baseline is straight forward.
+
+General best practices like limiting the columns selected, limiting the documents selected and avoiding table scans are important. The deeper a filter condition is in the document model, the more work the query processor has to do (and the more RUs it consumes), so keep frequent predicates at the root whenever possible and/or use indexing [policies](https://docs.microsoft.com/en-us/azure/cosmos-db/index-policy) to optimize common queries.
+
+Avoid cross partition queries when possible. CosmosDB will run the query in parallel, but it is more work and thus higher RUs.
+
+## Key-Value Cache
 
 CosmosDB is an excellent key-value cache with simple geo-distribution and replication. Performance is often better than other caching solutions and CosmosDB is cost competitive. The added simplicity of having one data access API and one data platform to manage makes development and operations more efficient.
 
@@ -132,15 +140,7 @@ Some general guidelines:
 * Use CosmosDB [TTL](https://docs.microsoft.com/en-us/azure/cosmos-db/time-to-live) to automatically remove old items
 * Use CosmosDB [change feed](https://docs.microsoft.com/en-us/azure/cosmos-db/change-feed) to extract values into other systems
 
-### Understanding RUs
-
-A best practice is to baseline the RUs for each "action" and include as part of your testing suite. Changes to your document model or query can result in significant changes in RUs. The CosmosDB API has the ability to capture RUs for each action, so building a baseline is straight forward.
-
-General best practices like limiting the columns selected, limiting the documents selected and avoiding table scans are important. The deeper a filter condition is in the document model, the more work the query processor has to do (and the more RUs it consumes), so keep frequent predicates at the root whenever possible and/or use indexing [policies](https://docs.microsoft.com/en-us/azure/cosmos-db/index-policy) to optimize common queries.
-
-Avoid cross partition queries when possible. CosmosDB will run the query in parallel, but it is more work and thus higher RUs.
-
-### Conclusion
+## Conclusion
 
 Unlike relational modeling where specific normal forms are verifiable, document modeling is a collection of decisions based heavily on usage patterns. There is no "right" or "correct" answer but there are best practices and trade offs based on usage. It is important to understand the usage patterns early so that you can optimize the document model.
 
@@ -148,7 +148,7 @@ Unlike relational modeling where specific normal forms are verifiable, document 
 
 Click the new sample query icon in the Data Explorer tool bar and run the default select * query to see the first 100 documents
 
-CosmosDB Query cheat sheet: <https://docs.microsoft.com/en-us/azure/cosmos-db/query-cheat-sheet>
+CosmosDB Query [cheat sheet:](<https://docs.microsoft.com/en-us/azure/cosmos-db/query-cheat-sheet>)
 
 ```sql
 
