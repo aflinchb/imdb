@@ -1,11 +1,11 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections.Generic;
+﻿using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading;
-using Microsoft.Azure.Documents;
+using System.Threading.Tasks;
 
 namespace imdb_import
 {
@@ -14,7 +14,8 @@ namespace imdb_import
         static int count = 0;
         static DocumentClient client;
         static Uri collectionLink;
-        static object rowLock = new object();
+        static readonly object rowLock = new object();
+        static int retryCount = 0;
 
         static async Task Main(string[] args)
         {
@@ -38,8 +39,22 @@ namespace imdb_import
             string cosmosDatabase = args[2].Trim();
             string cosmosCollection = args[3].Trim();
 
+            // increase timeout and number of retries
+            ConnectionPolicy cp = new ConnectionPolicy
+            {
+                ConnectionProtocol = Protocol.Tcp,
+                ConnectionMode = ConnectionMode.Direct,
+                MaxConnectionLimit = 100,
+                RequestTimeout = TimeSpan.FromSeconds(90),
+                RetryOptions = new RetryOptions
+                {
+                    MaxRetryAttemptsOnThrottledRequests = 20,
+                    MaxRetryWaitTimeInSeconds = 75
+                }
+            };
+
             // open the Cosmos client
-            client = new DocumentClient(new Uri(cosmosUrl), cosmosKey);
+            client = new DocumentClient(new Uri(cosmosUrl), cosmosKey, cp);
             await client.OpenAsync();
 
             // create the collection link
@@ -83,7 +98,7 @@ namespace imdb_import
             Task.WaitAll(tasks.ToArray());
 
             // done
-            Console.WriteLine("Documents Loaded: {0}\n\nImport Complete", count);
+            Console.WriteLine("Documents Loaded: {0}\n\nTotal Retries: {1}", count, retryCount);
         }
 
         static async Task LoadData(List<dynamic> list, int start, int length)
@@ -106,7 +121,7 @@ namespace imdb_import
                 catch (DocumentClientException dce)
                 {
                     // catch the CosmosDB RU exceeded exception and retry
-
+                    retryCount++;
                     Thread.Sleep(dce.RetryAfter);
                 }
 
