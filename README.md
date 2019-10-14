@@ -15,49 +15,13 @@ Used with permission.
 
 ```
 
-## Create CosmosDB Server, Database and Collection and load the IMDb sample data
+## Setup
 
-This takes several minutes to run
-
-```bash
-
-# set environment variables
-
-# location
-export Imdb_Location="centralus"
-
-# replace xxxx with a unique identifier (or replace the entire name)
-# do not use punctuation or uppercase (a-z, 0-9)
-export Imdb_Name="imdbcosmosxxxx"
-
-## if true, change name to avoid DNS failure on create
-az cosmosdb check-name-exists -n ${Imdb_Name}
-
-# Resource Group Name
-export Imdb_RG=${Imdb_Name}-rg
-
-# create a new resource group
-az group create -n $Imdb_RG -l $Imdb_Location
-
-# create the CosmosDB server
-az cosmosdb create  -g $Imdb_RG -n $Imdb_Name > ~/cosmos.log
-
-# create the database
-az cosmosdb database create -d imdb -g $Imdb_RG -n $Imdb_Name
-
-# create the collection
-# 400 is the minimum RUs
-# /partitionKey is the partition key
-# partiton key is the id mod 10
-az cosmosdb collection create --throughput 400 --partition-key-path /partitionKey -g $Imdb_RG -n $Imdb_Name -d imdb -c movies
-
-# get readwrite key
-export Imdb_Key=$(az cosmosdb keys list -n $Imdb_Name -g $Imdb_RG --query primaryMasterKey -o tsv)
-
-# run the docker IMDb Import app
-docker run -it --rm fourco/imdb-import $Imdb_Name $Imdb_Key imdb movies
-
-```
+* Create an Azure CosmosDB Account (this takes several minutes to complete)
+* Create a CosmosDB database named imdb
+* Create a CosmosDB collection named movies
+* Partition Key: /key
+* Load imdb data
 
 ## Exploring the data
 
